@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Wallet</title>
+</head>
+<body>
+  <h1>Create Your Wallet</h1>
+  
+  <button id="create-wallet">Create Wallet</button>
+  
+  <div id="wallet-details">
+    <h3>Your Wallet Details:</h3>
+    <p><strong>Address: </strong><span id="wallet-address"></span></p>
+    <p><strong>Private Key: </strong><span id="wallet-private-key"></span></p>
+  </div>
+  
+  <button id="download-wallet">Download Wallet</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.0.0/dist/ethers.umd.min.js"></script>
+  <script>
+    // Create a wallet using ethers.js
+    document.getElementById('create-wallet').addEventListener('click', function() {
+      const wallet = ethers.Wallet.createRandom();
+      document.getElementById('wallet-address').innerText = wallet.address;
+      document.getElementById('wallet-private-key').innerText = wallet.privateKey;
+    });
+
+    // download the wallet JSON file
+    document.getElementById('download-wallet').addEventListener('click', function() {
+      const walletDetails = {
+        address: document.getElementById('wallet-address').innerText,
+        privateKey: document.getElementById('wallet-private-key').innerText,
+      };
+      
+      const blob = new Blob([JSON.stringify(walletDetails)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'wallet.json';
+      link.click();
+    });
+  </script>
+</body>
+</html>

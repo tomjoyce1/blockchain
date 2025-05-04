@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buy Event Ticket</title>
+    <!-- Load ethers first -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <!-- Load config.js next (must define window.config) -->
+    <script src="config.js"></script>
+  </head>
+  <body>
+    <h1>Buy Event Ticket</h1>
+
+    <div id="wallet-section">
+      <input
+        type="text"
+        id="wallet-input"
+        placeholder="Enter wallet address (optional)"
+      />
+      <button id="connect-wallet">Connect Wallet</button>
+    </div>
+    <p id="ticket-price">Ticket Price: Loading...</p>
+    <p id="wallet-address">No wallet connected</p>
+
+    <button id="buy-ticket">Buy Ticket for 0.01 ETH</button>
+    <button id="refund-ticket">Refund Ticket</button>
+
+    <script>
+      let signer;
+      let provider;
+
+      const abi = [
+        "function buyTicket() external payable",
+        "function ticketPrice() public view returns (uint256)",
+        "function balanceOf(address) view returns (uint256)",
+        "function refundTicket() external returns (bool)",
+        "function owner() public view returns (address)",
+        "function vendorAddress() public view returns (address)",
+      ];
+      async function refundTicket() {
+        if (!signer) {
+          alert("Please connect your wallet first.");
+          return;
+        }
+
+        const contract = new ethers.Contract(
+          window.config.CONTRACT_ADDRESS,
+          abi,
+          signer
+        );
+
+        try {
+          const tx = await contract.refundTicket();
+          await tx.wait();
+          alert("Refund successful!");
+        } catch (err) {
+          console.error(err);
+          alert("Refund failed: " + err.message);
+        }
+      }
+
+      document
+        .getElementById("refund-ticket")
+        .addEventListener("click", refundTicket);
+
+      // Initialize the provider and check network
+      async function checkNetwork() {
+        if (!provider) {
+          alert("Provider is not set!");
+          return false;
+        }
+
+        try {
+          const network = await provider.getNetwork();
+          console.log("Current network:", network.chainId);
+          const targetChainId = parseInt(window.config.CHAIN_ID, 16);
+
+          if (network.chainId !== targetChainId) {
+            try {
+              // First try to switch to Sepolia
+              await window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: window.config.CHAIN_ID }],
+              });
+
+              // Re-initialize provider after network switch
+              provider = new ethers.providers.Web3Provider(window.ethereum);
+              signer = provider.getSigner();
+
+              return true;
+            } catch (switchError) {
+              console.error("Failed to switch network:", switchError);
+              alert("Please switch to Sepolia network manually in MetaMask");
+              return false;
+            }
+          }
+          return true;
+        } catch (error) {
+          console.error("Network check failed:", error);
+          return false;
+        }
+      }
+
+      async function getTicketPrice() {
+        try {
+          const signerOrProvider = signer || provider;
+          if (!signerOrProvider) {
+            throw new Error("No provider available");
+          }
+
+          const contract = new ethers.Contract(
+            window.config.CONTRACT_ADDRESS,
+            abi,
+            signerOrProvider
+          );
+
+          const price = await contract.ticketPrice();
+          console.log("Raw price:", price.toString()); // Debug line
+          return ethers.utils.formatEther(price);
+        } catch (error) {
+          console.error("Detailed error:", error);
+          if (error.code === "CALL_EXCEPTION") {
+            console.error(
+              "Contract call failed. Network:",
+              await provider.getNetwork()
+            );
+            console.error("Contract address:", window.config.CONTRACT_ADDRESS);
+          }
+          return "Error loading price";
+        }
+      }
+
+      async function connectWallet() {
+        try {
+          if (!window.ethereum) {
+            alert("Please install MetaMask!");
+            return;
+          }
+
+          const manualAddress = document.getElementById("wallet-input").value;
+
+          // Initialize provider
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+
+          if (manualAddress) {
+            // Validate the address format
+            if (!ethers.utils.isAddress(manualAddress)) {
+              alert("Invalid wallet address format");
+              return;
+            }
+
+            // Use the manual address for read-only operations
+            signer = provider.getSigner();
+            document.getElementById("wallet-address").innerText =
+              "Connected: " + manualAddress + " (Read-only)";
+          } else {
+            // Normal MetaMask connection
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            const address = await signer.getAddress();
+            document.getElementById("wallet-address").innerText =
+              "Connected: " + address;
+          }
+
+          // Check network and get price
+          const isValidNetwork = await checkNetwork();
+          if (isValidNetwork) {
+            const price = await getTicketPrice();
+            document.getElementById(
+              "ticket-price"
+            ).innerText = `Ticket Price: ${price} ETH`;
+          }
+        } catch (error) {
+          console.error("Connection error:", error);
+          alert("Failed to connect wallet: " + error.message);
+        }
+      }
+
+      async function buyTicket() {
+        if (!signer) {
+          alert("Please connect your wallet first.");
+          return;
+        }
+
+        const contract = new ethers.Contract(
+          window.config.CONTRACT_ADDRESS,
+          abi,
+          signer
+        );
+
+        try {
+          // Ensure we are on the correct network before proceeding
+          const isValidNetwork = await checkNetwork();
+          if (!isValidNetwork) {
+            return;
+          }
+
+          const ticketPrice = await contract.ticketPrice();
+
+          // Ensure the price is valid
+          if (ticketPrice <= 0) {
+            alert("Ticket price is invalid!");
+            return;
+          }
+
+          // Proceed to buy the ticket
+          const tx = await contract.buyTicket({
+            value: ticketPrice,
+          });
+
+          await tx.wait();
+          alert("Ticket purchased successfully!");
+        } catch (err) {
+          console.error(err);
+          alert("Transaction failed: " + err.message);
+        }
+      }
+
+      document
+        .getElementById("connect-wallet")
+        .addEventListener("click", connectWallet);
+      document
+        .getElementById("buy-ticket")
+        .addEventListener("click", buyTicket);
+    </script>
+  </body>
+</html>

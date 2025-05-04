@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Check Balance</title>
+    <!-- Load ethers from CDN without integrity check -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+
+    <!-- Load config after ethers -->
+    <script src="config.js"></script>
+  </head>
+  <body>
+    <h1>Check Balance</h1>
+    <div>
+      <p>
+        <strong>Attendee Balance:</strong>
+        <span id="attendee-balance"></span> ETH
+      </p>
+      <p>
+        <strong>Doorman Balance:</strong> <span id="doorman-balance"></span> ETH
+      </p>
+      <p>
+        <strong>Venue Balance:</strong> <span id="venue-balance"></span> ETH
+      </p>
+    </div>
+
+    <script>
+      window.addEventListener("load", async () => {
+        try {
+          // Check if ethers loaded successfully
+          if (typeof ethers === "undefined") {
+            throw new Error("Ethers library failed to load");
+          }
+
+          // Check if MetaMask is installed
+          if (typeof window.ethereum === "undefined") {
+            throw new Error("Please install MetaMask to use this application");
+          }
+
+          // Initialize provider and request account access
+          const provider = new ethers.providers.JsonRpcProvider(config.RPC_URL);
+
+          async function fetchBalance(address) {
+            try {
+              const balance = await provider.getBalance(address);
+              return ethers.utils.formatEther(balance);
+            } catch (error) {
+              console.error("Error fetching balance:", error);
+              return "0";
+            }
+          }
+
+          // Fetch and display balances
+          const attendeeBalance = await fetchBalance(config.ATTENDEE_ADDRESS);
+          const doormanBalance = await fetchBalance(config.DOORMAN_ADDRESS);
+          const venueBalance = await fetchBalance(config.VENDOR_ADDRESS);
+
+          document.getElementById("attendee-balance").innerText =
+            attendeeBalance;
+          document.getElementById("doorman-balance").innerText = doormanBalance;
+          document.getElementById("venue-balance").innerText = venueBalance;
+        } catch (error) {
+          console.error("Initialization error:", error);
+          alert(
+            error.message || "Failed to initialize. Check console for details."
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

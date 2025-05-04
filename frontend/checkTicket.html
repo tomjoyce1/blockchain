@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Wallet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .warning {
+            color: red;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        #wallet-details {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Checker</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="config.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .balance-card {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .role-selector {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ticket Balance Checker</h1>
+
+    <div class="role-selector">
+        <label>I am a:</label>
+        <select id="role">
+            <option value="attendee">Event Attendee</option>
+            <option value="doorman">Doorman</option>
+            <option value="venue">Venue Manager</option>
+        </select>
+    </div>
+
+    <div id="address-input">
+        <input type="text" id="wallet-address" placeholder="Enter wallet address" />
+        <button onclick="checkBalance()">Check Balance</button>
+    </div>
+
+    <div class="balance-card">
+        <h3>Wallet Details</h3>
+        <p>Address: <span id="display-address">-</span></p>
+        <p>ETH Balance: <span id="eth-balance">-</span></p>
+        <p>Ticket Tokens: <span id="token-balance">-</span></p>
+    </div>
+
+    <div id="venue-stats" style="display: none;" class="balance-card">
+        <h3>Venue Statistics</h3>
+        <p>Total Tickets Sold: <span id="total-sold">-</span></p>
+        <p>Total Funds Collected: <span id="total-funds">-</span></p>
+    </div>
+
+    <script>
+        const abi = [
+            "function balanceOf(address) view returns (uint256)",
+            "function ticketPrice() public view returns (uint256)",
+            "function totalSupply() public view returns (uint256)"
+        ];
+
+        let provider;
+        let contract;
+
+        async function initialize() {
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            contract = new ethers.Contract(
+                window.config.CONTRACT_ADDRESS,
+                abi,
+                provider
+            );
+        }
+
+        async function checkBalance() {
+            if (!provider) await initialize();
+            
+            const address = document.getElementById('wallet-address').value;
+            if (!ethers.utils.isAddress(address)) {
+                alert('Invalid Ethereum address');
+                return;
+            }
+
+            try {
+                // Get ETH balance
+                const ethBalance = await provider.getBalance(address);
+                document.getElementById('display-address').textContent = address;
+                document.getElementById('eth-balance').textContent = 
+                    ethers.utils.formatEther(ethBalance) + ' ETH';
+
+                // Get token balance
+                const tokenBalance = await contract.balanceOf(address);
+                document.getElementById('token-balance').textContent = 
+                    ethers.utils.formatUnits(tokenBalance, 18);
+
+                // If venue manager, show additional stats
+                const role = document.getElementById('role').value;
+                if (role === 'venue') {
+                    document.getElementById('venue-stats').style.display = 'block';
+                    const totalSupply = await contract.totalSupply();
+                    const ticketPrice = await contract.ticketPrice();
+                    document.getElementById('total-sold').textContent = 
+                        ethers.utils.formatUnits(totalSupply, 18);
+                    document.getElementById('total-funds').textContent = 
+                        ethers.utils.formatEther(ticketPrice.mul(totalSupply)) + ' ETH';
+                } else {
+                    document.getElementById('venue-stats').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking balance:', error);
+                alert('Error checking balance: ' + error.message);
+            }
+        }
+
+        // Role change handler
+        document.getElementById('role').addEventListener('change', function() {
+            const role = this.value;
+            if (role === 'doorman') {
+                document.getElementById('venue-stats').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

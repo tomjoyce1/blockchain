@@ -16,60 +16,86 @@
 
     <h1>Check Balance</h1>
     <div>
+      <button id="connect-wallet" style="margin-bottom: 1rem">
+        Connect Wallet
+      </button>
       <p>
-        <strong>Attendee Balance:</strong>
-        <span id="attendee-balance"></span> ETH
+        <strong>Wallet Address:</strong>
+        <span id="wallet-address">Not connected</span>
       </p>
+      <p><strong>ETH Balance:</strong> <span id="eth-balance">-</span> ETH</p>
       <p>
-        <strong>Doorman Balance:</strong> <span id="doorman-balance"></span> ETH
-      </p>
-      <p>
-        <strong>Venue Balance:</strong> <span id="venue-balance"></span> ETH
+        <strong>Token Balance:</strong>
+        <span id="token-balance">-</span> Tickets
       </p>
     </div>
 
     <script>
-      window.addEventListener("load", async () => {
-        try {
-          // Check if ethers loaded successfully
-          if (typeof ethers === "undefined") {
-            throw new Error("Ethers library failed to load");
-          }
+      const abi = [
+        "function balanceOf(address) view returns (uint256)",
+        "function name() view returns (string)",
+        "function symbol() view returns (string)",
+      ];
+      let provider, signer, contract;
 
-          // Check if MetaMask is installed
-          if (typeof window.ethereum === "undefined") {
-            throw new Error("Please install MetaMask to use this application");
-          }
-
-          // Initialize provider and request account access
-          const provider = new ethers.providers.JsonRpcProvider(config.RPC_URL);
-
-          async function fetchBalance(address) {
-            try {
-              const balance = await provider.getBalance(address);
-              return ethers.utils.formatEther(balance);
-            } catch (error) {
-              console.error("Error fetching balance:", error);
-              return "0";
-            }
-          }
-
-          // Fetch and display balances
-          const attendeeBalance = await fetchBalance(config.ATTENDEE_ADDRESS);
-          const doormanBalance = await fetchBalance(config.DOORMAN_ADDRESS);
-          const venueBalance = await fetchBalance(config.VENDOR_ADDRESS);
-
-          document.getElementById("attendee-balance").innerText =
-            attendeeBalance;
-          document.getElementById("doorman-balance").innerText = doormanBalance;
-          document.getElementById("venue-balance").innerText = venueBalance;
-        } catch (error) {
-          console.error("Initialization error:", error);
-          alert(
-            error.message || "Failed to initialize. Check console for details."
-          );
+      async function connectWallet() {
+        if (!window.ethereum) {
+          alert("Please install MetaMask to use this feature.");
+          return;
         }
-      });
+        try {
+          await window.ethereum.request({ method: "eth_requestAccounts" });
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          signer = provider.getSigner();
+          const address = await signer.getAddress();
+          document.getElementById("wallet-address").innerText = address;
+          await updateBalances(address);
+        } catch (err) {
+          alert("Wallet connection failed: " + (err.message || err));
+        }
+      }
+
+      async function updateBalances(address) {
+        try {
+          // ETH balance
+          const ethBalance = await provider.getBalance(address);
+          document.getElementById("eth-balance").innerText =
+            ethers.utils.formatEther(ethBalance);
+
+          // Token balance (Event Tickets)
+          contract = new ethers.Contract(
+            window.config.CONTRACT_ADDRESS,
+            abi,
+            provider
+          );
+          const tokenBalance = await contract.balanceOf(address);
+          // Format as integer tickets (assuming 18 decimals)
+          const tickets = ethers.utils.formatUnits(tokenBalance, 18);
+          document.getElementById("token-balance").innerText = tickets;
+        } catch (err) {
+          document.getElementById("eth-balance").innerText = "-";
+          document.getElementById("token-balance").innerText = "-";
+        }
+      }
+
+      document
+        .getElementById("connect-wallet")
+        .addEventListener("click", connectWallet);
+
+      // Optional: auto-update if account changes
+      if (window.ethereum) {
+        window.ethereum.on("accountsChanged", function (accounts) {
+          if (accounts.length > 0) {
+            document.getElementById("wallet-address").innerText = accounts[0];
+            updateBalances(accounts[0]);
+          } else {
+            document.getElementById("wallet-address").innerText =
+              "Not connected";
+            document.getElementById("eth-balance").innerText = "-";
+            document.getElementById("token-balance").innerText = "-";
+          }
+        });
+      }
     </script>
   </body>
 </html>

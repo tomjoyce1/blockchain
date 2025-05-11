@@ -174,3 +174,27 @@ window.addEventListener("DOMContentLoaded", () => {
     .getElementById("refund-ticket")
     .addEventListener("click", refundTicket);
 });
+
+const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const randomChar = () => chars[Math.floor(Math.random() * (chars.length - 1))];
+const randomString = (length) =>
+  Array.from(Array(length)).map(randomChar).join("");
+const cards = document.querySelectorAll(".card");
+
+cards.forEach((card) => {
+  const letters = card.querySelector(".card-letters");
+
+  const handleOnMove = (e) => {
+    const rect = card.getBoundingClientRect(),
+      x = e.clientX - rect.left,
+      y = e.clientY - rect.top;
+
+    letters.style.setProperty("--x", `${x}px`);
+    letters.style.setProperty("--y", `${y}px`);
+
+    letters.innerText = randomString(1500);
+  };
+
+  card.onmousemove = (e) => handleOnMove(e);
+  card.ontouchmove = (e) => handleOnMove(e.touches[0]);
+});

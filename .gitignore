@@ -18,4 +18,5 @@ ignition/deployments/chain-31337
 .env
 .config.js
 
+ignition/
 frontend/config.js

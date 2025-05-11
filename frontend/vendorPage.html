@@ -1,0 +1,137 @@
+draw.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Withdrawal</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="config.js"></script>
+        <script src="header-component.js" defer></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .info-card {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header-component></header-component>
+
+    <h1>Vendor Withdrawal Panel</h1>
+
+    <div class="info-card">
+        <h3>Contract Information</h3>
+        <p>Available Funds: <span id="available-funds">Loading...</span></p>
+        <p>Time Until Withdrawal: <span id="unlock-time">Loading...</span></p>
+        <p>Vendor Address: <span id="vendor-address">Loading...</span></p>
+    </div>
+
+    <button id="connect-wallet">Connect Vendor Wallet</button>
+    <button id="withdraw-funds" disabled>Withdraw Funds</button>
+
+    <script>
+        const abi = [
+            "function totalFundsAvailable() public view returns (uint256)",
+            "function withdrawUnlockTime() public view returns (uint256)",
+            "function vendor() public view returns (address)",
+            "function withdrawFunds() external"
+        ];
+
+        let provider;
+        let signer;
+        let contract;
+
+        async function initializeContract() {
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            contract = new ethers.Contract(window.config.CONTRACT_ADDRESS, abi, provider);
+            await updateInfo();
+        }
+
+        async function updateInfo() {
+            try {
+                const funds = await contract.totalFundsAvailable();
+                const unlockTime = await contract.withdrawUnlockTime();
+                const vendorAddr = await contract.vendor();
+                
+                document.getElementById('available-funds').textContent = 
+                    ethers.utils.formatEther(funds) + ' ETH';
+                
+                const now = Math.floor(Date.now() / 1000);
+                const timeLeft = unlockTime - now;
+                
+                if (timeLeft > 0) {
+                    document.getElementById('unlock-time').textContent = 
+                        `${Math.ceil(timeLeft / 3600)} hours ${Math.ceil((timeLeft % 3600) / 60)} minutes`;
+                    document.getElementById('withdraw-funds').disabled = true;
+                } else {
+                    document.getElementById('unlock-time').textContent = 'Available Now';
+                    document.getElementById('withdraw-funds').disabled = false;
+                }
+                
+                document.getElementById('vendor-address').textContent = vendorAddr;
+            } catch (error) {
+                console.error('Error updating info:', error);
+            }
+        }
+
+        async function connectWallet() {
+            try {
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                const address = await signer.getAddress();
+                const vendorAddr = await contract.vendor();
+                
+                if (address.toLowerCase() !== vendorAddr.toLowerCase()) {
+                    alert('Connected wallet is not the vendor wallet');
+                    return;
+                }
+                
+                contract = contract.connect(signer);
+                alert('Vendor wallet connected successfully');
+            } catch (error) {
+                console.error('Connection error:', error);
+                alert('Failed to connect: ' + error.message);
+            }
+        }
+
+        async function withdrawFunds() {
+            try {
+                if (!signer) {
+                    alert('Please connect vendor wallet first');
+                    return;
+                }
+
+                const tx = await contract.withdrawFunds();
+                await tx.wait();
+                alert('Funds withdrawn successfully!');
+                await updateInfo();
+            } catch (error) {
+                console.error('Withdrawal error:', error);
+                alert('Failed to withdraw: ' + error.message);
+            }
+        }
+
+        // Initialize and set up event listeners
+        window.addEventListener('load', initializeContract);
+        document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+        document.getElementById('withdraw-funds').addEventListener('click', withdrawFunds);
+
+        // Update info every 60 seconds
+        setInterval(updateInfo, 60000);
+    </script>
+</body>
+</html>

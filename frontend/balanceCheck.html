@@ -7,11 +7,13 @@
     <!-- Load ethers from CDN without integrity check -->
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
-
     <!-- Load config after ethers -->
     <script src="config.js"></script>
+    <script src="header-component.js" defer></script>
   </head>
   <body>
+    <header-component></header-component>
+
     <h1>Check Balance</h1>
     <div>
       <p>

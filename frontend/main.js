@@ -133,24 +133,31 @@ async function refundTicket() {
 
     if (balance.eq(0)) throw new Error("You don't have any tickets to refund");
 
-    const tx = await contract.refundTicket();
-    await tx.wait();
+    let tx;
+    try {
+      tx = await contract.refundTicket();
+      await tx.wait();
+    } catch (err) {
+      // Check for refund window closed in all possible error fields
+      const errorMsg = err?.message || err?.reason || err?.error?.message || "";
+      const errorData = err?.data
+        ? ethers.utils.toUtf8String(err.data.slice(138))
+        : "";
+      if (errorMsg.includes("cannot estimate gas")) {
+        alert(
+          "Unable to process refund. This may be because you have no tickets, or there is a network issue. Please check your ticket balance and try again."
+        );
+        return;
+      } else {
+        throw err;
+      }
+    }
 
     const newBalance = await contract.balanceOf(address);
     alert(`Refund successful! Your new ticket balance is: ${newBalance}`);
   } catch (err) {
     console.error(err);
-    if (
-      err &&
-      (err.message?.includes("Refund window has closed") ||
-        err.reason?.includes("Refund window has closed"))
-    ) {
-      alert(
-        "Refund period is over. You can no longer refund your ticket. Please contact the event organizer for further assistance."
-      );
-    } else {
-      alert("Refund failed: " + (err.message || "Unknown error"));
-    }
+    alert("Refund failed: " + (err.message || "Unknown error"));
   } finally {
     button.disabled = false;
     button.textContent = "Refund Ticket";

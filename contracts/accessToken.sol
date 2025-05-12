@@ -9,14 +9,12 @@ contract accessToken is ERC20, Ownable {
     address public vendor;
 
     uint256 public totalFundsAvailable;
-    uint256 public withdrawUnlockTime;
 
     constructor(uint256 _ticketPrice, address _vendor) ERC20("EventTicket", "ETIX")
     Ownable(msg.sender) {
         ticketPrice = _ticketPrice;
         vendor = _vendor;
         _mint(msg.sender, 1000 * 10 ** decimals());  
-        withdrawUnlockTime = block.timestamp + 1 days; // Funds can be withdrawn after 1 day
     }
 
     function buyTicket() external payable {
@@ -31,7 +29,6 @@ contract accessToken is ERC20, Ownable {
         uint256 amount = 1 * 10 ** decimals();
         require(balanceOf(msg.sender) >= amount, "You don't own a ticket.");
         require(address(this).balance >= ticketPrice, "Contract has insufficient funds.");
-        require(block.timestamp < withdrawUnlockTime, "Refund window has closed.");
 
         _transfer(msg.sender, owner(), amount); 
 
@@ -44,7 +41,6 @@ contract accessToken is ERC20, Ownable {
 
     function withdrawFunds() external {
         require(msg.sender == vendor, "Only vendor can withdraw.");
-        require(block.timestamp >= withdrawUnlockTime, "Funds are locked.");
         require(totalFundsAvailable > 0, "No funds available.");
 
         uint256 amount = totalFundsAvailable;
@@ -52,12 +48,6 @@ contract accessToken is ERC20, Ownable {
 
         (bool success, ) = payable(vendor).call{value: amount}("");
         require(success, "Withdraw failed.");
-    }
-
-    // Allow owner to update unlock time if needed
-    function setWithdrawUnlockTime(uint256 _timestamp) external onlyOwner {
-        require(_timestamp > block.timestamp, "Must be in the future.");
-        withdrawUnlockTime = _timestamp;
     }
 
     // Allow owner to update vendor address

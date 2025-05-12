@@ -4,30 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Check Balance</title>
-    <!-- Load ethers from CDN without integrity check -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-
-    <!-- Load config after ethers -->
     <script src="config.js"></script>
     <script src="header-component.js" defer></script>
   </head>
-  <body>
+  <body class="bg-gray-900 text-white min-h-screen font-mono">
     <header-component></header-component>
 
-    <h1>Check Balance</h1>
-    <div>
-      <button id="connect-wallet" style="margin-bottom: 1rem">
-        Connect Wallet
-      </button>
-      <p>
-        <strong>Wallet Address:</strong>
-        <span id="wallet-address">Not connected</span>
+    <div class="w-full flex flex-col items-center mt-8 mb-4">
+      <h1 class="text-5xl font-extrabold text-green-400 mb-2">
+        Check Balance
+      </h1>
+      <p class="text-lg text-gray-300">
+        Buy, check, and refund your blockchain event tickets with ease.
       </p>
-      <p><strong>ETH Balance:</strong> <span id="eth-balance">-</span> ETH</p>
-      <p>
-        <strong>Token Balance:</strong>
-        <span id="token-balance">-</span> Tickets
-      </p>
+    </div>
+
+    <div class="max-w-2xl mx-auto bg-gray-800 p-6 rounded-xl shadow-lg mb-20">
+      <h1 class="text-2xl font-bold mb-4 text-green-400">Check Balance</h1>
+      <div class="space-y-4">
+        <button
+          id="connect-wallet"
+          class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white mb-4"
+        >
+          Connect Wallet
+        </button>
+        <p>
+          <strong>Wallet Address:</strong>
+          <span id="wallet-address">Not connected</span>
+        </p>
+        <p><strong>ETH Balance:</strong> <span id="eth-balance">-</span> ETH</p>
+        <p>
+          <strong>Token Balance:</strong>
+          <span id="token-balance">-</span> Tickets
+        </p>
+      </div>
     </div>
 
     <script>

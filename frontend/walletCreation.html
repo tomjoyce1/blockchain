@@ -4,24 +4,49 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Create Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css" />
     <script src="header-component.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.0.0/dist/ethers.umd.min.js"></script>
   </head>
-  <body>
+  <body class="bg-gray-900 text-white min-h-screen font-mono">
     <header-component></header-component>
 
-    <h1>Create Your Wallet</h1>
-
-    <button id="create-wallet">Create Wallet</button>
-
-    <div id="wallet-details">
-      <h3>Your Wallet Details:</h3>
-      <p><strong>Address: </strong><span id="wallet-address"></span></p>
-      <p><strong>Private Key: </strong><span id="wallet-private-key"></span></p>
+    <div class="w-full flex flex-col items-center mt-8 mb-4">
+      <h1 class="text-5xl font-extrabold text-green-400 mb-2">Create Wallet</h1>
+      <p class="text-lg text-gray-300">
+        Buy, check, and refund your blockchain event tickets with ease.
+      </p>
     </div>
 
-    <button id="download-wallet">Download Wallet</button>
-
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.0.0/dist/ethers.umd.min.js"></script>
+    <div
+      class="max-w-3xl w-full mx-auto bg-gray-800 p-6 rounded-xl shadow-lg mb-20"
+    >
+      <h1 class="text-2xl font-bold mb-4 text-green-400">Create Your Wallet</h1>
+      <div class="space-y-4">
+        <button
+          id="create-wallet"
+          class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white"
+        >
+          Create Wallet
+        </button>
+        <div id="wallet-details" class="bg-gray-900 rounded-lg p-4">
+          <h3 class="text-lg font-bold mb-2 text-green-400">
+            Your Wallet Details:
+          </h3>
+          <p><strong>Address: </strong><span id="wallet-address"></span></p>
+          <p>
+            <strong>Private Key: </strong><span id="wallet-private-key"></span>
+          </p>
+        </div>
+        <button
+          id="download-wallet"
+          class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white"
+        >
+          Download Wallet
+        </button>
+      </div>
+    </div>
     <script>
       // Create a wallet using ethers.js
       document
@@ -32,7 +57,6 @@
           document.getElementById("wallet-private-key").innerText =
             wallet.privateKey;
         });
-
       // download the wallet JSON file
       document
         .getElementById("download-wallet")
@@ -41,7 +65,6 @@
             address: document.getElementById("wallet-address").innerText,
             privateKey: document.getElementById("wallet-private-key").innerText,
           };
-
           const blob = new Blob([JSON.stringify(walletDetails)], {
             type: "application/json",
           });

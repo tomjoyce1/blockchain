@@ -140,7 +140,17 @@ async function refundTicket() {
     alert(`Refund successful! Your new ticket balance is: ${newBalance}`);
   } catch (err) {
     console.error(err);
-    alert("Refund failed: " + (err.message || "Unknown error"));
+    if (
+      err &&
+      (err.message?.includes("Refund window has closed") ||
+        err.reason?.includes("Refund window has closed"))
+    ) {
+      alert(
+        "Refund period is over. You can no longer refund your ticket. Please contact the event organizer for further assistance."
+      );
+    } else {
+      alert("Refund failed: " + (err.message || "Unknown error"));
+    }
   } finally {
     button.disabled = false;
     button.textContent = "Refund Ticket";

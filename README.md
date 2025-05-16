@@ -4,6 +4,8 @@
 
 This project is a decentralized application (DApp) for blockchain-based event ticketing. It allows users to create wallets, purchase event tickets, check balances, validate tickets, and request refunds, all through a modern, unified web interface. The backend is powered by Ethereum smart contracts, and the frontend is built with HTML, Tailwind CSS, and JavaScript (ethers.js).
 
+![alt text](assets/image-1.png)
+
 ## Features
 
 - **Wallet Creation:** Users can generate a new Ethereum wallet directly in the browser and download the private key for safekeeping.
@@ -13,6 +15,8 @@ This project is a decentralized application (DApp) for blockchain-based event ti
 - **Doorman Check:** Validate tickets for event entry.
 - **Vendor Withdrawal:** Event vendors can withdraw accumulated funds from ticket sales.
 - **Modern UI/UX:** All pages share a consistent, modern design with interactive card effects and a unified navigation header.
+
+![Demo](assets/downloadwallet.gif)
 
 ## Smart Contract
 

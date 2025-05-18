@@ -1,8 +1,6 @@
-![alt text](image.png)
+![alt text](assets/image.png)
 
 # Blockchain Event Ticketing DApp
-
-This project is a decentralized application (DApp) for blockchain-based event ticketing. It allows users to create wallets, purchase event tickets, check balances, validate tickets, and request refunds, all through a modern, unified web interface. The backend is powered by Ethereum smart contracts, and the frontend is built with HTML, Tailwind CSS, and JavaScript (ethers.js).
 
 ![alt text](assets/image-1.png)
 
@@ -27,22 +25,6 @@ This project is a decentralized application (DApp) for blockchain-based event ti
   - `refundTicket()`: Refund a ticket (no time limit).
   - `withdrawFunds()`: Vendor withdraws accumulated ETH.
 - **No Refund Window:** Refunds are always allowed if the user owns a ticket and the contract has funds.
-
-## Frontend
-
-- **Location:** `frontend/`
-- **Main Pages:**
-  - `homepage.html`: Landing page and quick ticket purchase.
-  - `ticketPurchase.html`: Buy or refund tickets.
-  - `balanceCheck.html`: Check wallet and ticket balances.
-  - `checkTicket.html`: Validate tickets for entry.
-  - `walletCreation.html`: Create and download a new wallet.
-  - `vendorPage.html`: Vendor withdrawal panel.
-- **Shared Components:**
-  - `header.html` and `header-component.js`: Consistent navigation/header across all pages.
-  - `main.js`: Handles wallet connection, ticket purchase/refund, and card UI effects.
-  - `config.js`: Stores contract addresses and network configuration.
-  - `css/style.css`: Custom styles and card effects.
 
 ## How to Deploy and Use
 

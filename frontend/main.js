@@ -2,10 +2,10 @@ let signer;
 let provider;
 
 const abi = [
-  "function buyTicket() external payable",
+  "function buyTicket(uint256 quantity) external payable",
   "function ticketPrice() public view returns (uint256)",
   "function balanceOf(address) view returns (uint256)",
-  "function refundTicket() external returns (bool)",
+  "function refundTicket(uint256 quantity) external",
   "function owner() public view returns (address)",
   "function vendorAddress() public view returns (address)",
 ];
@@ -82,6 +82,9 @@ async function checkNetwork() {
 }
 
 async function buyTicket() {
+  const buyLoading = document.getElementById("buy-loading");
+  buyLoading.classList.remove("hidden");
+
   if (!signer) {
     alert("Please connect your wallet first.");
     return;
@@ -97,22 +100,33 @@ async function buyTicket() {
     const isValidNetwork = await checkNetwork();
     if (!isValidNetwork) return;
 
+    // Get quantity from input
+    const quantity = parseInt(document.getElementById("buy-amount").value, 10);
+    if (!quantity || quantity < 1) {
+      alert("Please enter a valid ticket quantity.");
+      return;
+    }
+
     const ticketPrice = await contract.ticketPrice();
     if (ticketPrice.lte(0)) {
       alert("Ticket price is invalid!");
       return;
     }
 
-    const tx = await contract.buyTicket({ value: ticketPrice });
+    const totalPrice = ticketPrice.mul(quantity);
+
+    const tx = await contract.buyTicket(quantity, { value: totalPrice });
     await tx.wait();
-    alert("Ticket purchased successfully!");
+    alert(`Purchased ${quantity} ticket(s) successfully!`);
   } catch (err) {
     console.error(err);
     alert("Transaction failed: " + err.message);
   }
+  buyLoading.classList.add("hidden");
 }
-
 async function refundTicket() {
+  const refundLoading = document.getElementById("refund-loading");
+  refundLoading.classList.remove("hidden");
   if (!signer) {
     alert("Please connect your wallet first.");
     return;
@@ -133,16 +147,22 @@ async function refundTicket() {
 
     if (balance.eq(0)) throw new Error("You don't have any tickets to refund");
 
+    // Get quantity from input
+    const quantity = parseInt(
+      document.getElementById("refund-amount").value,
+      10
+    );
+    if (!quantity || quantity < 1) {
+      alert("Please enter a valid refund quantity.");
+      return;
+    }
+
     let tx;
     try {
-      tx = await contract.refundTicket();
+      tx = await contract.refundTicket(quantity);
       await tx.wait();
     } catch (err) {
-      // Check for refund window closed in all possible error fields
       const errorMsg = err?.message || err?.reason || err?.error?.message || "";
-      const errorData = err?.data
-        ? ethers.utils.toUtf8String(err.data.slice(138))
-        : "";
       if (errorMsg.includes("cannot estimate gas")) {
         alert(
           "Unable to process refund. This may be because you have no tickets, or there is a network issue. Please check your ticket balance and try again."
@@ -160,7 +180,8 @@ async function refundTicket() {
     alert("Refund failed: " + (err.message || "Unknown error"));
   } finally {
     button.disabled = false;
-    button.textContent = "Refund Ticket";
+    button.textContent = "Refund Ticket(s)";
+    refundLoading.classList.add("hidden");
   }
 }
 
@@ -186,7 +207,9 @@ window.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("connect-wallet")
     .addEventListener("click", connectWallet);
+
   document.getElementById("buy-ticket").addEventListener("click", buyTicket);
+
   document
     .getElementById("refund-ticket")
     .addEventListener("click", refundTicket);

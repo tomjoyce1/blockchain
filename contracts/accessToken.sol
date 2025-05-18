@@ -17,26 +17,30 @@ contract accessToken is ERC20, Ownable {
         _mint(msg.sender, 1000 * 10 ** decimals());  
     }
 
-    function buyTicket() external payable {
-        require(msg.value >= ticketPrice, "Not enough ETH sent.");
+    function buyTicket(uint256 quantity) external payable {
+        require(quantity > 0, "Quantity must be at least 1.");
+        uint256 totalPrice = ticketPrice * quantity;
+        require(msg.value >= totalPrice, "Not enough ETH sent.");
 
-        _transfer(owner(), msg.sender, 1 * 10 ** decimals());
+        _transfer(owner(), msg.sender, quantity * 10 ** decimals());
 
         totalFundsAvailable += msg.value;
     }
 
-    function refundTicket() external {
-        uint256 amount = 1 * 10 ** decimals();
-        require(balanceOf(msg.sender) >= amount, "You don't own a ticket.");
-        require(address(this).balance >= ticketPrice, "Contract has insufficient funds.");
+    function refundTicket(uint256 quantity) external {
+        require(quantity > 0, "Quantity must be at least 1.");
+        uint256 amount = quantity * 10 ** decimals();
+        uint256 totalRefund = ticketPrice * quantity;
+        require(balanceOf(msg.sender) >= amount, "You don't own enough tickets.");
+        require(address(this).balance >= totalRefund, "Contract has insufficient funds.");
 
-        _transfer(msg.sender, owner(), amount); 
+        _transfer(msg.sender, owner(), amount);
 
         // Send ETH refund
-        (bool success, ) = msg.sender.call{value: ticketPrice}("");
+        (bool success, ) = msg.sender.call{value: totalRefund}("");
         require(success, "Refund failed.");
 
-        totalFundsAvailable -= ticketPrice;
+        totalFundsAvailable -= totalRefund;
     }
 
     function withdrawFunds() external {

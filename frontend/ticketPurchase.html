@@ -44,19 +44,51 @@
         <p id="wallet-address" class="text-sm text-gray-400">
           No wallet connected
         </p>
+
         <div class="flex flex-col sm:flex-row gap-2">
+          <input
+            type="number"
+            id="buy-amount"
+            min="1"
+            value="1"
+            class="w-24 px-2 py-2 rounded bg-gray-700 text-white placeholder-gray-400"
+            placeholder="# to buy"
+            style="max-width: 120px"
+          />
           <button
             id="buy-ticket"
-            class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white"
+            class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white flex items-center gap-2"
           >
-            Buy Ticket for 0.01 ETH
+            <span
+              id="buy-loading"
+              class="hidden animate-spin h-5 w-5 border-4 border-green-200 border-t-transparent rounded-full"
+            ></span>
+
+            Buy Ticket(s)
           </button>
+          <input
+            type="number"
+            id="refund-amount"
+            min="1"
+            value="1"
+            class="w-24 px-2 py-2 rounded bg-gray-700 text-white placeholder-gray-400"
+            placeholder="# to refund"
+            style="max-width: 120px"
+          />
           <button
             id="refund-ticket"
-            class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white"
+            class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white flex items-center gap-2"
           >
-            Refund Ticket
+            <span
+              id="refund-loading"
+              class="hidden animate-spin h-5 w-5 border-4 border-red-200 border-t-transparent rounded-full"
+            ></span>
+
+            Refund Ticket(s)
           </button>
+
+</div>
+<p id="user-balance" class="text-green-300 mt-2"></p>
         </div>
       </div>
     </div>

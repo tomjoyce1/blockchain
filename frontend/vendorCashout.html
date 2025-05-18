@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vendor Withdraw</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="config.js"></script>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen font-mono">
+    <div class="max-w-xl mx-auto bg-gray-800 p-6 rounded-xl shadow-lg mt-12">
+      <h1 class="text-3xl font-bold text-yellow-400 mb-4">Vendor Withdraw</h1>
+      <p class="mb-4 text-gray-300">
+        Connect your vendor wallet to withdraw ETH collected from ticket sales.
+      </p>
+      <button
+        id="connect-wallet"
+        class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white mb-4"
+      >
+        Connect Wallet
+      </button>
+      <div id="wallet-address" class="mb-4 text-green-300"></div>
+      <div class="mb-4">
+        <span class="font-semibold">Contract ETH Balance:</span>
+        <span id="contract-balance" class="text-yellow-300">-</span> ETH
+      </div>
+      <button
+        id="withdraw-btn"
+        class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white flex items-center gap-2 mb-2"
+        disabled
+      >
+        <span
+          id="withdraw-loading"
+          class="hidden animate-spin h-5 w-5 border-4 border-green-200 border-t-transparent rounded-full"
+        ></span>
+        Withdraw Funds
+      </button>
+      <div id="status" class="mt-2 text-sm"></div>
+    </div>
+    <script>
+      let provider, signer, contract, vendorAddressOnChain;
+      const abi = [
+        "function withdrawFunds() public",
+        "function vendor() public view returns (address)",
+      ];
+
+      async function connectWallet() {
+        const status = document.getElementById("status");
+        status.textContent = "";
+        if (!window.ethereum) {
+          alert("Please install MetaMask!");
+          return;
+        }
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        const address = await signer.getAddress();
+        document.getElementById(
+          "wallet-address"
+        ).textContent = `Connected: ${address}`;
+        contract = new ethers.Contract(
+          window.config.CONTRACT_ADDRESS,
+          abi,
+          signer
+        );
+        await updateContractBalance();
+        // Get vendor address from contract
+        try {
+          vendorAddressOnChain = await contract.vendor();
+          if (address.toLowerCase() !== vendorAddressOnChain.toLowerCase()) {
+            document.getElementById("withdraw-btn").disabled = true;
+            status.textContent =
+              "Error: Connected wallet is NOT the vendor address. Only the vendor can withdraw funds.";
+          } else {
+            document.getElementById("withdraw-btn").disabled = false;
+            status.textContent = "";
+          }
+        } catch (err) {
+          document.getElementById("withdraw-btn").disabled = true;
+          status.textContent = "Error fetching vendor address from contract.";
+        }
+      }
+
+      async function updateContractBalance() {
+        const balance = await provider.getBalance(
+          window.config.CONTRACT_ADDRESS
+        );
+        document.getElementById("contract-balance").textContent =
+          ethers.utils.formatEther(balance);
+      }
+
+      async function withdrawFunds() {
+        const btn = document.getElementById("withdraw-btn");
+        const loading = document.getElementById("withdraw-loading");
+        const status = document.getElementById("status");
+        btn.disabled = true;
+        loading.classList.remove("hidden");
+        status.textContent = "";
+        try {
+          // Double-check vendor before allowing withdrawal
+          const address = await signer.getAddress();
+          if (address.toLowerCase() !== vendorAddressOnChain.toLowerCase()) {
+            status.textContent =
+              "Error: Only the vendor address can withdraw funds.";
+            return;
+          }
+          const tx = await contract.withdrawFunds();
+          status.textContent = "Transaction sent. Waiting for confirmation...";
+          await tx.wait();
+          status.textContent = "Withdrawal successful!";
+          await updateContractBalance();
+        } catch (err) {
+          status.textContent =
+            "Withdrawal failed: " + (err.data?.message || err.message);
+        } finally {
+          loading.classList.add("hidden");
+          btn.disabled = false;
+        }
+      }
+
+      document.getElementById("connect-wallet").onclick = connectWallet;
+      document.getElementById("withdraw-btn").onclick = withdrawFunds;
+    </script>
+  </body>
+</html>

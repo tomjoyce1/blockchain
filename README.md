@@ -21,8 +21,3 @@ npm install
 
 - **File:** `contracts/accessToken.sol`
 - **Token:** ERC20-compliant, named `EventTicket (ETIX)`
-- **Key Functions:**
-  - `buyTicket()`: Purchase a ticket with ETH.
-  - `refundTicket()`: Refund a ticket (no time limit).
-  - `withdrawFunds()`: Vendor withdraws accumulated ETH.
-- **No Refund Window:** Refunds are always allowed if the user owns a ticket and the contract has funds.

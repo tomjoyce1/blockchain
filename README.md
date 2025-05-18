@@ -21,3 +21,4 @@ npm install
 
 - **File:** `contracts/accessToken.sol`
 - **Token:** ERC20-compliant, named `EventTicket (ETIX)`
+  Tests are run with 'npx hardhat test'

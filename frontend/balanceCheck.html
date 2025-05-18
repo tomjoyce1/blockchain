@@ -93,7 +93,6 @@
         .getElementById("connect-wallet")
         .addEventListener("click", connectWallet);
 
-      // Optional: auto-update if account changes
       if (window.ethereum) {
         window.ethereum.on("accountsChanged", function (accounts) {
           if (accounts.length > 0) {

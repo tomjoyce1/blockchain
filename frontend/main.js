@@ -238,15 +238,3 @@ cards.forEach((card) => {
   card.onmousemove = (e) => handleOnMove(e);
   card.ontouchmove = (e) => handleOnMove(e.touches[0]);
 });
-
-// Only add this for testing purposes!
-if (typeof module !== "undefined") {
-  module.exports = {
-    buyTicket,
-    refundTicket,
-    connectWallet,
-  };
-}
-if (typeof module !== "undefined") {
-  module.exports = { randomString };
-}
